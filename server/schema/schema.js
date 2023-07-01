@@ -1,4 +1,6 @@
-const { projects, clients } = require('../sampleData.js');
+//Mongoose models
+const Project = require('../models/Project.js');
+const Client = require('../models/Client.js');
 
 const {
   GraphQLSchema,
@@ -51,36 +53,73 @@ const RootQuery = new GraphQLObjectType({
     clients: {
       type: new GraphQLList(ClientType),
       resolve(parent, args) {
-        return clients;
+        return Client.find();
       }
     },
     client: {
       type: ClientType,
       args: { id: { type: GraphQLID } },
       resolve(parent, args) {
-        return clients.find(client => {
-          return client.id == args.id;
-        });
+        return Client.findById(args.id);
       }
     },
     projects: {
       type: new GraphQLList(ProjectType),
       resolve(parent, args) {
-        return projects;
+        return Project.find();
       }
     },
     project: {
       type: ProjectType,
       args: { id: { type: GraphQLID } },
       resolve(parent, args) {
-        return projects.find(project => {
-          return project.id == args.id;
-        });
+        return Project.findById(args.id);
       }
     }
   }
 });
 
+// Mutations
+const mutation = new GraphQLObjectType({
+  name: 'Mutation',
+  fields: {
+    addClient: {
+      type: ClientType,
+      args: {
+        name: {
+          type: GraphQLString
+        },
+        email: {
+          type: GraphQLString
+        },
+        phone: {
+          type: GraphQLString
+        }
+      },
+      resolve(parent, args) {
+        const client = new Client({
+          name: args.name,
+          email: args.email,
+          phone: args.phone
+        });
+
+        return client.save(); // save to db
+      }
+    },
+    deleteClient: {
+      type: ClientType,
+      args: {
+        id: {
+          type: GraphQLID
+        }
+      },
+      resolve(parent, args) {
+        return Client.findByIdAndDelete(args.id);
+      }
+    }
+  }
+});
 module.exports = new GraphQLSchema({
-  query: RootQuery
+  query: RootQuery,
+  mutation
 });
